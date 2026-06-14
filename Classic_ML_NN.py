@@ -37,3 +37,30 @@ class BiggerNet(nn.Module):
 model = BiggerNet()
 X = torch.rand(784)
 print(model(X))
+
+
+# --- the model (nn.Module): one knob-holding layer ---
+model = nn.Linear(1, 1)
+
+# --- the data: each y is exactly 2*x, the rule we want it to discover ---
+X = torch.tensor([[1.0], [2.0], [3.0], [4.0]])
+Y = torch.tensor([[2.0], [4.0], [6.0], [8.0]])
+
+# --- loss (how wrong?) + optimizer (how to fix?) ---
+criterion = nn.MSELoss()
+optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+
+# --- the training loop: the five-step heartbeat, repeated ---
+for epoch in range(2000):
+    optimizer.zero_grad()         # 1. clear last step's slopes
+    preds = model(X)              # 2. forward pass: predict
+    loss = criterion(preds, Y)    # 3. score the wrongness (one number)
+    loss.backward()               # 4. autograd: dump slopes into every .grad
+    optimizer.step()              # 5. optimizer: spend the slopes, update knobs
+
+    if epoch % 40 == 0:
+        print(f"epoch {epoch:3d}   loss {loss.item():.4f}")
+
+print("\nlearned weight:", round(model.weight.item(), 3))   # should be ~2.0
+print("learned bias:  ", round(model.bias.item(), 3))       # should be ~0.0
+print("predict x=5:   ", round(model(torch.tensor([[5.0]])).item(), 3))  # ~10.0
